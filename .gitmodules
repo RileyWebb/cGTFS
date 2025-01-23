@@ -1,0 +1,22 @@
+[submodule "ext/glew"]
+	path = ext/glew
+	url = https://github.com/Perlmint/glew-cmake
+[submodule "ext/cimplot"]
+	path = ext/cimplot
+	url = https://github.com/cimgui/cimplot
+[submodule "ext/cimgui"]
+	path = ext/cimgui
+	url = https://github.com/cimgui/cimgui
+[submodule "ext/curl"]
+	path = ext/curl
+	url = https://github.com/curl/curl.git
+[submodule "ext/libzip"]
+	path = ext/libzip
+	url = https://github.com/nih-at/libzip/
+[submodule "ext/sdl"]
+	path = ext/sdl
+	url = https://github.com/libsdl-org/SDL
+	branch = SDL2
+[submodule "ext/zlib"]
+	path = ext/zlib
+	url = https://github.com/madler/zlib

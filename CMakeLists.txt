@@ -27,9 +27,11 @@ file(GLOB SOURCES src/*.c src/client/*.c)
 
 #include_directories(quake2 ${SDL2_INCLUDE_DIRS})
 
-add_executable(TrainView ${SOURCES})
+add_executable(TrainView ${SOURCES}
+        include/gtfs.h
+        src/gtfs/shape.c)
 
-target_link_libraries(TrainView PRIVATE ${PLATFORM_LIBS} SDL2main libglew_static cglm stb cimgui cimplot)# )#vulkan glew gl glu)
+target_link_libraries(TrainView PRIVATE ${PLATFORM_LIBS} SDL2main libglew_static cimgui cimplot)# cglm stb)#vulkan glew gl glu)
 target_link_libraries(TrainView PUBLIC SDL2)
 
 target_compile_options(TrainView PRIVATE
