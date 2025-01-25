@@ -17,6 +17,10 @@
 	path = ext/sdl
 	url = https://github.com/libsdl-org/SDL
 	branch = SDL2
-[submodule "ext/zlib"]
-	path = ext/zlib
-	url = https://github.com/madler/zlib
+[submodule "ext/uriparser"]
+	path = ext/uriparser
+	url = https://github.com/uriparser/uriparser
+[submodule "ext/minizip"]
+	path = ext/minizip
+	url = https://github.com/zlib-ng/minizip-ng
+	branch = master

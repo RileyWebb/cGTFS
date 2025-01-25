@@ -1,9 +1,22 @@
 add_subdirectory(sdl EXCLUDE_FROM_ALL)
 add_subdirectory(glew EXCLUDE_FROM_ALL)
 #add_subdirectory(zlib)
-#add_subdirectory(libzip EXCLUDE_FROM_ALL)
-#add_subdirectory(curl EXCLUDE_FROM_ALL)
 #add_subdirectory(cglm EXCLUDE_FROM_ALL)
+#add_subdirectory(curl EXCLUDE_FROM_ALL)
+
+set(URIPARSER_BUILD_DOCS OFF)
+set(URIPARSER_BUILD_TESTS OFF)
+set(URIPARSER_BUILD_TOOLS OFF)
+set(URIPARSER_BUILD_FUZZERS OFF)
+set(URIPARSER_ENABLE_INSTALL OFF)
+set(URIPARSER_SHARED_LIB OFF)
+add_subdirectory(uriparser)
+
+#set(MZ_BZIP2 OFF)
+#set(MZ_LZMA OFF)
+#set(MZ_ZSTD OFF)
+#set(MZ_FORCE_FETCH_LIBS ON)
+add_subdirectory(minizip EXCLUDE_FROM_ALL)
 
 #STB
 #file(GLOB STB_SOURCES stb/*.h)

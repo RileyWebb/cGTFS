@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.29)
-project(TrainView C)
+cmake_minimum_required(VERSION 3.29.6)
+project(cGTFS C)
 
 set(CMAKE_C_STANDARD_REQUIRED 99)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
@@ -20,21 +20,20 @@ add_subdirectory(ext)
 
 if (WIN32)
     set(PLATFORM_LIBS mingw32)
+    add_definitions(-DUNICODE -D_UNICODE)
 endif()
 
 # Sources
-file(GLOB SOURCES src/*.c src/client/*.c)
+file(GLOB SOURCES src/*.c src/gtfs/*.c src/ui/*.c src/util/*.c)
 
 #include_directories(quake2 ${SDL2_INCLUDE_DIRS})
 
-add_executable(TrainView ${SOURCES}
-        include/gtfs.h
-        src/gtfs/shape.c)
+add_executable(cGTFS ${SOURCES})
 
-target_link_libraries(TrainView PRIVATE ${PLATFORM_LIBS} SDL2main libglew_static cimgui cimplot)# cglm stb)#vulkan glew gl glu)
-target_link_libraries(TrainView PUBLIC SDL2)
+target_link_libraries(cGTFS PRIVATE ${PLATFORM_LIBS} SDL2main libglew_static cimgui cimplot uriparser minizip)# cglm stb)#vulkan glew gl glu)
+target_link_libraries(cGTFS PUBLIC SDL2)
 
-target_compile_options(TrainView PRIVATE
+target_compile_options(cGTFS PRIVATE
         $<$<CONFIG:Debug>:
         #-pedantic
         #-Wall
@@ -59,4 +58,4 @@ add_custom_target(copy_info
         ${CMAKE_CURRENT_SOURCE_DIR}/CREDITS
         ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 
-add_dependencies(TrainView copy_data copy_info)
+add_dependencies(cGTFS copy_data copy_info)

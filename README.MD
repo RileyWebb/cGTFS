@@ -1,5 +1,5 @@
-# TrainView
+# cGTFS
 
 ``git submodule update --recursive --init``
 
-https://gtfs.ovapi.n
+https://gtfs.ovapi.nl
