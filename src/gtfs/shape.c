@@ -1,148 +1,107 @@
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
+
+#include "debug.h"
 
 #include "gtfs.h"
 
-gtfs_point_t gtfs__parse_point(gtfs_shape_t *shape, char *line)
+int gtfs_parse_shapes(gtfs_schedule_t *schedule, wchar_t *buffer)
 {
-    gtfs_point_t point;
+    if (!schedule) { DEBUG_ERROR("Schedule is uninitialized"); return -1; }
 
-    char *token = strtok(line, ",");
-
-    while( *token != NULL ) {
-        printf( " %s\n", token ); //printing each token
-        //token = strtok(NULL, " ");
-    }
-
-    return point;
-}
-
-const char* getfield(char* line, int num)
-{
-    const char* tok;
-    for (tok = strtok(line, ",");
-         tok && *tok;
-         tok = strtok(NULL, ",\n"))
-    {
-        if (!--num)
-            return tok;
-    }
-    return NULL;
-}
-
-void *gtfs_parse_shapes(gtfs_schedule_t *schedule, char *buffer)
-{
     if (schedule->shapes) free(schedule->shapes);
     schedule->num_shapes = 0;
 
-    gtfs_shape_t shapes[20000] = {0}; 
+    wchar_t *context; // Context for wcstok_s
+    wchar_t *token = wcstok_s(buffer, L",\n", &context); // Tokenize by comma and newline
 
+    if (*token == L'\uFEFF')
+        token++;
+
+    wchar_t **cols[5];
+    wchar_t *id = NULL, *pt_lat = NULL, *pt_lon = NULL, *pt_seq = NULL, *pt_dist = NULL;
+
+    for (int i = 0; i < 5; ++i)
     {
-        char *str = strdup(buffer);
-        char *line = strtok(str, "\n");
-        while (line != NULL)
+        if (!wcscmp(token, L"shape_id"))
         {
-            while(*line != '\"')
-                line++;
+            cols[i] = &id;
+        } else if (!wcscmp(token, L"shape_pt_lat"))
+        {
+            cols[i] = &pt_lat;
+        } else if (!wcscmp(token, L"shape_pt_lon"))
+        {
+            cols[i] = &pt_lon;
+        } else if (!wcscmp(token, L"shape_pt_sequence"))
+        {
+            cols[i] = &pt_seq;
+        } else if (!wcscmp(token, L"shape_dist_traveled"))
+        {
+            cols[i] = &pt_dist;
+        } else { DEBUG_ERROR("Unable to parse shapes file"); return -1; }
 
-            char *start = ++line;
-            size_t len = 0;
-            while(*line != '\"')
-            {
-                line++;
-                len++;
-            }
+        if (i<4)
+            token = wcstok_s(NULL, L",\n", &context);
+    }
 
-            char *id = malloc(len + 1);
-            strncpy(id, start, len);
-            id[len] = '\0';
+    wchar_t *last_id = NULL;
+    gtfs_shape_t *current_shape = NULL;
 
-            int found = 0;
-            for (size_t i = 0; i < schedule->num_shapes; ++i)
-            {
-                if (!strcmp(shapes[i].shape_id, id))
-                {
-                    shapes[i].num_points++;
-                    found = 1;
-                    break;
-                }
-            }
-
-            if (found == 0)
-            {
-                shapes[schedule->num_shapes].shape_id = strdup(id);
-                schedule->num_shapes++;
-            }
-
-            free(id);
-
-            //printf("%s\n", id );
-
-            line = strtok(NULL, "\n");
+    do
+    {
+        for (int i = 0; i < 5; ++i)
+        {
+            *cols[i] = wcstok_s(NULL, L",\n", &context);
+            if (!*cols[i])
+                goto done;//{ DEBUG_ERROR("Unable to parse point in shapes file"); return -1; }
         }
 
-        free(str);
-    }
-
-    schedule->shapes = malloc(sizeof(gtfs_shape_t) * schedule->num_shapes);
-
-    for (size_t i = 0; i < schedule->num_shapes; ++i)
-    {
-        schedule->shapes[i].shape_id = shapes[i].shape_id;
-        schedule->shapes[i].points = malloc(sizeof(gtfs_point_t) * shapes[i].num_points);
-        schedule->shapes[i].num_points = shapes[i].num_points;
-    }
-
-    {
-        char *str = strdup(buffer);
-        char *line = strtok(str, "\n");
-        line = strtok(NULL, "\n");
-        while (line != NULL)
+        if (last_id == NULL || wcscmp(id, last_id))
         {
-            while(*line != '\"')
-                line++;
+            schedule->num_shapes++;
+            // TODO: FIX THIS YOU LAZY SLOB
+            schedule->shapes = realloc(schedule->shapes, sizeof(gtfs_shape_t) * schedule->num_shapes);
+            current_shape = &schedule->shapes[schedule->num_shapes - 1];
+            memset(current_shape, 0, sizeof(gtfs_shape_t));
 
-            char *start = ++line;
-            size_t len = 0;
-            while(*line != '\"')
+            if (id[wcslen(id) - 1] == '\"' && id[0] == '\"')
             {
-                line++;
-                len++;
+                current_shape->shape_id = calloc(wcslen(id) - 1, sizeof(wchar_t));
+                wcsncat(current_shape->shape_id, (wchar_t*)(id + 1), wcslen(id) - 2);
             }
-
-            char *id = malloc(len + 1);
-            strncpy(id, start, len);
-            id[len] = '\0';
-
-            float lat, lon;
-            int index;
-            float distance;
-            sscanf(line, "\",\"%f\",\"%f\",\"%i\",\"%f\"", &lat, &lon, &index, &distance);
-            index--;
-            for (size_t i = 0; i < schedule->num_shapes; ++i)
-            {
-                if (!strcmp(schedule->shapes[i].shape_id, id))
-                {
-                    schedule->shapes[i].points[index].lat = lat;
-                    schedule->shapes[i].points[index].lon = lon;
-                    break;
-                }
-            }
-
-            free(id);
-
-            line = strtok(NULL, "\n");
+            else
+                current_shape->shape_id = wcsdup(id);
         }
 
-        free(str);
-    }
+        current_shape->num_points++;
 
-    for (size_t i = 0; i < schedule->num_shapes; ++i)
-    {
-        //if (schedule->shapes[i].shape_id)
-            //printf("%s\n", schedule->shapes[i].shape_id);
-    }
+        // TODO: FIX THIS YOU LAZY SLOB
+        current_shape->points = realloc(current_shape->points, sizeof(gtfs_point_t) * current_shape->num_points);
 
-    //return schedule;
+        gtfs_point_t *point = &current_shape->points[current_shape->num_points - 1];
+
+        wchar_t *pt_lat_end = (wchar_t*)(pt_lat + wcslen(pt_lat) - 1);
+        if (*pt_lat_end == '\"' && pt_lat[0] == '\"')
+            point->lat = wcstod(pt_lat + 1, &pt_lat_end - 1);
+        else
+            point->lat = wcstod(pt_lat, &pt_lat_end);
+
+        wchar_t *pt_lon_end = (wchar_t*)(pt_lon + wcslen(pt_lon) - 1);
+        if (*pt_lon_end == '\"' && pt_lon[0] == '\"')
+            point->lon = wcstod(pt_lon + 1, &pt_lon_end - 1);
+        else
+            point->lon = wcstod(pt_lon, &pt_lon_end);
+
+        wchar_t *pt_dist_end = (wchar_t*)(pt_dist + wcslen(pt_dist) - 1);
+        if (*pt_dist_end == '\"' && pt_dist[0] == '\"')
+            point->dist = wcstod(pt_dist + 1, &pt_dist_end - 1);
+        else
+            point->dist = wcstod(pt_dist, &pt_dist_end);
+
+        last_id = id;
+    } while (1);
+
+done:
+
+    return 0;
 }

@@ -13,7 +13,7 @@ SDL_GLContext *glContext;
 
 ImGuiIO* ioptr;
 
-gtfs_schedule_t schedule = {0};
+gtfs_schedule_t schedule;
 
 void UI_Init()
 {
@@ -34,8 +34,8 @@ void UI_Init()
 
     //SDL_RaiseWindow(window);
 
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER , 1);
-    SDL_SetWindowMinimumSize(window , 200 , 200);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    SDL_SetWindowMinimumSize(window, 200, 200);
     SDL_GL_SetSwapInterval(1);
 
     glContext = SDL_GL_CreateContext(window);
@@ -61,30 +61,70 @@ void UI_Init()
     //debug_registercallback();
     ui_logEnabled = 0;
 
-    char *source = NULL;
-    FILE *fp = fopen("data/shapes.txt", "r");
-    if (fp != NULL) {
-
-        if (fseek(fp, 0L, SEEK_END) == 0) {
-            long bufsize = ftell(fp);
-            if (bufsize == -1) {  }
-
-            source = malloc(sizeof(char) * (bufsize + 1));
-
-            if (fseek(fp, 0L, SEEK_SET) != 0) {}
-
-            size_t newLen = fread(source, sizeof(char), bufsize, fp);
-            if ( ferror( fp ) != 0 ) {
-                fputs("Error reading file", stderr);
-            } else {
-                source[newLen++] = '\0';
-            }
+    {
+        FILE *fp = _wfopen(L"data/shapes.txt", L"r, ccs=UTF-8");
+        if (!fp)
+        {
+            wprintf(L"Error: Unable to open file\n");
         }
+
+        // Get file size
+        fseek(fp, 0, SEEK_END);
+        size_t file_size = ftell(fp);// / sizeof(wchar_t);  // Size in wide characters
+        rewind(fp);
+
+        // Allocate memory for the file content + null terminator
+        wchar_t *content = malloc((file_size + 1) * sizeof(wchar_t));
+        if (!content)
+        {
+            wprintf(L"Error: Memory allocation failed\n");
+            fclose(fp);
+        }
+
+        // Read file into buffer
+        fread(content, sizeof(wchar_t), file_size, fp);
+        content[file_size] = L'\0';  // Null-terminate the string
+
         fclose(fp);
+
+        //schedule = calloc(1, sizeof(gtfs_schedule_t));
+
+        gtfs_parse_shapes(&schedule, content);
+
+        free(content);
     }
+    {
+        FILE *fp = _wfopen(L"data/stops.txt", L"r, ccs=UTF-8");
+        if (!fp)
+        {
+            wprintf(L"Error: Unable to open file\n");
+        }
 
+        // Get file size
+        fseek(fp, 0, SEEK_END);
+        size_t file_size = ftell(fp);// / sizeof(wchar_t);  // Size in wide characters
+        rewind(fp);
 
-    gtfs_parse_shapes(&schedule, source);
+        // Allocate memory for the file content + null terminator
+        wchar_t *content = malloc((file_size + 1) * sizeof(wchar_t));
+        if (!content)
+        {
+            wprintf(L"Error: Memory allocation failed\n");
+            fclose(fp);
+        }
+
+        // Read file into buffer
+        fread(content, sizeof(wchar_t), file_size, fp);
+        content[file_size] = L'\0';  // Null-terminate the string
+
+        fclose(fp);
+
+        //schedule = calloc(1, sizeof(gtfs_schedule_t));
+
+        gtfs_parse_stops(&schedule, content);
+
+        free(content);
+    }
 }
 
 bool ui_running;
@@ -116,8 +156,8 @@ void UI_DrawGTFS()
 
     for (int i = 0; i < schedule.num_shapes; ++i)
     {
-        float xpoints[schedule.shapes[i].num_points];
-        float ypoints[schedule.shapes[i].num_points];
+        double xpoints[schedule.shapes[i].num_points];
+        double ypoints[schedule.shapes[i].num_points];
 
         for (int j = 0; j < schedule.shapes[i].num_points; ++j)
         {
@@ -128,8 +168,15 @@ void UI_DrawGTFS()
         ImPlot_GetAutoColor(&col, i);
         ImPlot_SetNextMarkerStyle(1, 1, (ImVec4){1,0,0,1}, 4, (ImVec4){1,1,1,1});
         ImPlot_SetNextLineStyle(col,1);
+        ImPlot_PlotLine_doublePtrdoublePtr("##Filled", &xpoints, &ypoints, schedule.shapes[i].num_points, 0, 0, sizeof(double));
         //ImPlot_PlotLine_FloatPtrFloatPtr("##Filled", &schedule.shapes[0].points[0].lat, &schedule.shapes[0].points[0].lon,schedule.shapes->num_points, 0, 0, );//sizeof(gtfs_point_t));
-        ImPlot_PlotLine_FloatPtrFloatPtr("##Filled", &xpoints, &ypoints, schedule.shapes[i].num_points, 0, 0, sizeof(float));//sizeof(gtfs_point_t));
+    }
+
+    for (int i = 0; i < schedule.num_stops; ++i)
+    {
+        char name[wcslen(schedule.stops[i].name) + 1];
+        wcstombs(&name, schedule.stops[i].name, wcslen(schedule.stops[i].name));
+        ImPlot_PlotText(name, schedule.stops[i].lat, schedule.stops[i].lon, (ImVec2){0,0}, ImPlotTextFlags_None);
     }
     //igPushID_Int(i);
 

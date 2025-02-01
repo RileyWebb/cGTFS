@@ -11,10 +11,40 @@
 
 int main(int argc, char *argv[])
 {
-    FILE *fp = fopen("log.txt", "w");
-    debug_register(fp);
+    FILE *log_fp = fopen("log.txt", "w");
+    debug_register(log_fp);
+/*
+    FILE *fp = _wfopen(L"data/shapes.txt", L"r, ccs=UTF-8");
+    if (!fp) {
+        wprintf(L"Error: Unable to open file\n");
+    }
 
-    gtfs_load_schedule(L"file:///data/providers/vicroads/google_transit.zip");
+    // Get file size
+    fseek(fp, 0, SEEK_END);
+    size_t file_size = ftell(fp);// / sizeof(wchar_t);  // Size in wide characters
+    rewind(fp);
+
+    // Allocate memory for the file content + null terminator
+    wchar_t *content = malloc((file_size + 1) * sizeof(wchar_t));
+    if (!content) {
+        wprintf(L"Error: Memory allocation failed\n");
+        fclose(fp);
+    }
+
+    // Read file into buffer
+    fread(content, sizeof(wchar_t), file_size, fp);
+    content[file_size] = L'\0';  // Null-terminate the string
+
+    fclose(fp);
+
+    gtfs_schedule_t *schedule = calloc(1, sizeof(gtfs_schedule_t));
+    DEBUG_INFO("START");
+    gtfs_parse_shapes(schedule, content);
+    DEBUG_INFO("END");
+
+    free(content);
+*/
+    //gtfs_load_schedule(L"file:///data/providers/vicroads/google_transit.zip");
 
     UI_Init();
     ui_running = 1;
@@ -25,7 +55,6 @@ int main(int argc, char *argv[])
     //UI_Exit();
 
     debug_flush();
-    fclose(fp);
     /*
     char *source = NULL;
     FILE *fp = fopen("data/shapes.txt", "r");

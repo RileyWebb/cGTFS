@@ -17,6 +17,7 @@ add_subdirectory(uriparser)
 #set(MZ_ZSTD OFF)
 #set(MZ_FORCE_FETCH_LIBS ON)
 add_subdirectory(minizip EXCLUDE_FROM_ALL)
+#add_subdirectory(libzip EXCLUDE_FROM_ALL)
 
 #STB
 #file(GLOB STB_SOURCES stb/*.h)

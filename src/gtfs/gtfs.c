@@ -56,7 +56,7 @@ gtfs_schedule_t *gtfs_load_schedule(wchar_t *uri_string)
 
             if (fseek(fp, 0L, SEEK_SET) != 0)
             {
-                DEBUG_ERROR("TODO IDK WHAT ERROR THIS IS");
+                DEBUG_ERROR("TODO IDK WHAT ERROR THIS IS"); //TODO: FIX
             }
 
             size_t newLen = fread(file_stream, sizeof(char), file_len, fp);
@@ -112,6 +112,8 @@ gtfs_schedule_t *gtfs_load_schedule(wchar_t *uri_string)
         }
     }
 
+
+    //TODO: MUST USE _WFOPEN
 error:
 
     free(file_stream);
